@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/version"
 
 	_ "github.com/grafana/loki/pkg/build"
@@ -51,8 +52,12 @@ func main() {
 
 	sentChan := make(chan time.Time)
 	receivedChan := make(chan time.Time)
+	f, err := os.Create("/tmp/data")
+	if err != nil {
+		log.Error(err)
+	}
 
-	w := writer.NewWriter(os.Stdout, sentChan, *interval, *size)
+	w := writer.NewWriter(f, sentChan, *interval, *size)
 	r := reader.NewReader(os.Stderr, receivedChan, *tls, *addr, *user, *pass, *lName, *lVal)
 	c := comparator.NewComparator(os.Stderr, *wait, *pruneInterval, *buckets, sentChan, receivedChan, r, true)
 
